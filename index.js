@@ -4,23 +4,41 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
+// default route
 app.get('/', (req, res)=>{
     res.send("The server is running")
 })
 
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://Aruth:<password>@cluster0.otkxf.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.otkxf.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-client.connect(err => {
-  const collection = client.db("test").collection("devices");
-  // perform actions on the collection object
-  client.close();
-});
 
+async function run(){
+    try{
+        await client.connect();
+        
+        /*==========================================
+                Products API 
+        ============================================*/ 
+        const productCollection = client.db('Aruth').collection('products');
 
+        // get popular products
+        app.get('/popular-products', async(req, res)=>{
+            const allPopularProducts =  productCollection.find({popular : true});
+            const skip = allPopularProducts.length - 5;
+            const latestProducts = await  allPopularProducts.skip(skip).toArray();
+            const reverse = latestProducts.reverse();
+           res.send(reverse)
+        });
 
+    }
+    finally{
+
+    }
+}
+
+run().catch(console.dir);
 
 app.listen(PORT, ()=>{
     console.log('The app is running');
