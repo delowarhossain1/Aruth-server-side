@@ -4,6 +4,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.use(express.json());
+app.use(cors());
+
 // default route
 app.get('/', (req, res)=>{
     res.send("The server is running")
@@ -30,6 +33,13 @@ async function run(){
             const latestProducts = await  allPopularProducts.skip(skip).toArray();
             const reverse = latestProducts.reverse();
            res.send(reverse)
+        });
+
+        // get product info by id 
+        app.get('/product-details/:id', async(req, res)=>{
+            const {id} = req.params;
+            const product = await productCollection.findOne({_id : id})
+            res.send(id)
         });
 
     }
