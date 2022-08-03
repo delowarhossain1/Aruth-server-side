@@ -67,7 +67,28 @@ async function run(){
         });
 
 
- 
+         /*==========================================
+                Login & Register
+        ============================================*/ 
+
+        //  send Token after login
+        app.put('/login', async(req, res) =>{
+            const {email} = req.query;
+            const token = jwt.sign({email}, process.env.ACCESS_TOKEN, {
+                expiresIn : '1y'
+            });
+
+            res.send({token});
+        });
+
+        // Register
+        app.post('/register', async(req, res)=>{
+            const userDoc = req.body;
+            const result = await usersCollection.insertOne(userDoc);
+            // const token = jwt.sign({email})
+
+            res.send(result);
+        });
     }
     finally{
 
