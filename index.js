@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 5000;
+require('dotenv').config();
 
 app.use(express.json());
 app.use(cors());
@@ -12,23 +13,46 @@ app.get('/', (req, res)=>{
     res.send("The server is running")
 })
 
+// Verify token
+function verifyToken(req, res, next) {
+   const authorization = req.headers.auth;
+   if(! authorization){
+    return res.status(401).send({message : 'Unauthorize access'})
+   }    
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+   const token = authorization.split(" ")[1];
+   jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded)=>{
+
+    if(err){
+      return  res.status(403).send({message : 'Forbidden access'});
+    }
+    else{
+        res.decoded = decoded;
+        next();
+    }
+   }) 
+}
+
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.otkxf.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 async function run(){
     try{
         await client.connect();
+
+        // Data base collection
+        const productsCollection = client.db('Aruth').collection('products');
+        const usersCollection = client.db('Aruth').collection('users');
+
         
         /*==========================================
                 Products API 
         ============================================*/ 
-        const productCollection = client.db('Aruth').collection('products');
 
         // get popular products
         app.get('/popular-products', async(req, res)=>{
-            const allPopularProducts =  productCollection.find({popular : true});
+            const allPopularProducts =  productsCollection.find({popular : true});
             const skip = allPopularProducts.length - 5;
             const latestProducts = await  allPopularProducts.skip(skip).toArray();
             const reverse = latestProducts.reverse();
@@ -38,10 +62,12 @@ async function run(){
         // get product info by id 
         app.get('/product-details/:id', async(req, res)=>{
             const {id} = req.params;
-            const product = await productCollection.findOne({_id : id})
-            res.send(id)
+            const product = await productsCollection.findOne({_id : ObjectId(id)})
+            res.send(product)
         });
 
+
+ 
     }
     finally{
 
