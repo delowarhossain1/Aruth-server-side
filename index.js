@@ -72,7 +72,7 @@ async function run(){
         ============================================*/ 
 
         //  send Token after login
-        app.put('/login', async(req, res) =>{
+        app.get('/access-token', async(req, res) =>{
             const {email} = req.query;
             const token = jwt.sign({email}, process.env.ACCESS_TOKEN, {
                 expiresIn : '1y'
@@ -82,11 +82,12 @@ async function run(){
         });
 
         // Register
-        app.post('/register', async(req, res)=>{
-            const userDoc = req.body;
-            const result = await usersCollection.insertOne(userDoc);
-            // const token = jwt.sign({email})
-
+        app.put('/register', async(req, res)=>{
+            const email = req.query.email;
+            const userDoc = {$set : req.body};
+            const query = {email};
+            const option = {upsert : true};
+            const result = await usersCollection.updateOne(query, userDoc, option);
             res.send(result);
         });
     }
