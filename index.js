@@ -64,8 +64,15 @@ async function run() {
     app.get("/popular-products", async (req, res) => {
       const allPopularProducts = productsCollection.find({ popular: true });
       const skip = allPopularProducts.length - 5;
-      const latestProducts = await allPopularProducts.skip(skip).toArray();
-      const reverse = latestProducts.reverse();
+      const latestProducts =  allPopularProducts.skip(skip).project({
+        img : 1,
+        name : 1, 
+        ratings : 1, 
+        price : 1, 
+        discount: 1,
+      })
+      const exactProduct = await latestProducts.toArray();
+      const reverse = exactProduct.reverse();
       res.send(reverse);
     });
 
@@ -85,7 +92,7 @@ async function run() {
       const ordersInfo = req.body;
       const result = await OrderCollection.insertOne(ordersInfo);
       res.send(result);
-      
+
     });
 
     /*==========================================
