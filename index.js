@@ -13,7 +13,11 @@ app.get("/", (req, res) => {
   res.send("The server is running");
 });
 
-// Verify token
+/*
+  ==========================
+   JSON web token ( verify token) 
+   ===========================
+*/ 
 function verifyToken(req, res, next) {
   const authorization = req.headers.auth;
   const email = req.query.email;
@@ -56,8 +60,8 @@ async function run() {
     const usersCollection = client.db("Aruth").collection("users");
     const OrderCollection = client.db("Aruth").collection("orders");
 
-    /*==========================================
-                Products API 
+    /*=============================================
+           ************** Products API ***********
         ============================================*/
 
     // get popular products
@@ -70,10 +74,22 @@ async function run() {
         ratings : 1, 
         price : 1, 
         discount: 1,
-      })
+      });
       const exactProduct = await latestProducts.toArray();
       const reverse = exactProduct.reverse();
       res.send(reverse);
+    });
+
+    // Just for you
+    app.get('/just-for-you', async(req, res)=>{
+
+    });
+
+    // Get all products
+    app.get('/all-products', async(req, res)=>{
+        const result = await productsCollection.find().toArray();
+        const latestProduct = result.reverse();
+        res.send(latestProduct);
     });
 
     // get product info by id
@@ -84,7 +100,7 @@ async function run() {
     });
 
     /*==========================================
-                Order management
+          ********* Order management **********
         ============================================*/
 
     // place order
@@ -96,7 +112,7 @@ async function run() {
     });
 
     /*==========================================
-                Login & Register
+          ******** Login & Register *******
         ============================================*/
 
     //  send Token after login
