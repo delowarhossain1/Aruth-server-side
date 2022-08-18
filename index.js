@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
   ===========================================
     *** JSON web token ( verify token) ***
    ===========================================
-*/ 
+*/
 function verifyToken(req, res, next) {
   const authorization = req.headers.auth;
   const email = req.query.email;
@@ -33,39 +33,19 @@ function verifyToken(req, res, next) {
       return res.status(403).send({ message: "Forbidden access" });
     } else {
       // Check access token email & api requested email;
-      if(decoded.email === email){
+      if (decoded.email === email) {
         return next();
-      }
-      else{
-        return send.status(403).send({message : 'Forbidden access'});
+      } else {
+        return send.status(403).send({ message: "Forbidden access" });
       }
     }
   });
 }
 
-/*===========================================
-        *** Verify admin ***
-===========================================*/ 
-
-const verifyAdmin = async(req, res, next) =>{
-  const email = req.query.email;
-  const query = {email};
-  const user = await usersCollection.findOne(query).toArray();
-
-  if(user?.role === 'admin'){
-      return next();
-  }
-  else{
-    return res.status(403).send({message : 'Forbidden access'});
-  }
-}
-
-
-
-/*======================================================================================*/ 
-/*======================================================================================*/ 
-/*======================================================================================*/ 
-/*======================================================================================*/ 
+/*======================================================================================*/
+/*======================================================================================*/
+/*======================================================================================*/
+/*======================================================================================*/
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.otkxf.mongodb.net/?retryWrites=true&w=majority`;
@@ -84,6 +64,22 @@ async function run() {
     const usersCollection = client.db("Aruth").collection("users");
     const OrderCollection = client.db("Aruth").collection("orders");
 
+    /*===========================================
+        *** Verify admin ***
+===========================================*/
+
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.query.email;
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+
+      if (user?.role === "admin") {
+        return next();
+      } else {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+    };
+
     /*=============================================
            ************** Products API ***********
         ============================================*/
@@ -92,11 +88,11 @@ async function run() {
     app.get("/popular-products", async (req, res) => {
       const allPopularProducts = productsCollection.find({ popular: true });
       const skip = allPopularProducts.length - 5;
-      const latestProducts =  allPopularProducts.skip(skip).project({
-        img : 1,
-        name : 1, 
-        ratings : 1, 
-        price : 1, 
+      const latestProducts = allPopularProducts.skip(skip).project({
+        img: 1,
+        name: 1,
+        ratings: 1,
+        price: 1,
         discount: 1,
       });
       const exactProduct = await latestProducts.toArray();
@@ -105,15 +101,13 @@ async function run() {
     });
 
     // Just for you
-    app.get('/just-for-you', async(req, res)=>{
-
-    });
+    app.get("/just-for-you", async (req, res) => {});
 
     // Get all products
-    app.get('/all-products', async(req, res)=>{
-        const result = await productsCollection.find().toArray();
-        const latestProduct = result.reverse();
-        res.send(latestProduct);
+    app.get("/all-products", async (req, res) => {
+      const result = await productsCollection.find().toArray();
+      const latestProduct = result.reverse();
+      res.send(latestProduct);
     });
 
     // get product info by id
@@ -132,14 +126,19 @@ async function run() {
       const ordersInfo = req.body;
       const result = await OrderCollection.insertOne(ordersInfo);
       res.send(result);
-
     });
-
 
     // ************ Admin control *******
 
-    app.get('/orders', verifyToken, verifyAdmin, async(req, res) =>{
-      const result = await OrderCollection.find().toArray();
+    app.get("/orders", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await OrderCollection.find().project({
+        _id : 1,
+        productImg: 1,
+        productName : 1,
+        productQuantity : 1,
+        status : 1,
+        date : 1,
+      }).toArray();
       res.send(result);
     });
 
@@ -168,24 +167,19 @@ async function run() {
     });
 
     // make user
-    app.patch('/make-admin', async(req, res)=>{
-
-    });
+    app.patch("/make-admin", async (req, res) => {});
 
     // is admin
-    app.get('/is-admin/:email', async(req, res)=>{
-      const {email} = req.params;
-      const user = await usersCollection.findOne({email});
+    app.get("/is-admin/:email", async (req, res) => {
+      const { email } = req.params;
+      const user = await usersCollection.findOne({ email });
 
-      if(user?.role === 'admin'){
-        res.send({isAdmin : true})
+      if (user?.role === "admin") {
+        res.send({ isAdmin: true });
+      } else {
+        res.send({ isAdmin: false });
       }
-      else{
-        res.send({isAdmin : false})
-      }
-
     });
-
   } finally {
   }
 }
