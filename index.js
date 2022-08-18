@@ -142,6 +142,20 @@ async function run() {
       res.send(result);
     });
 
+    // Order details
+    app.get('/order-details/:id', verifyToken, verifyAdmin,  async(req, res)=>{
+        console.log('hi')
+        const {id} = req.params;
+        const query = {_id : ObjectId(id)};
+        const order = await OrderCollection.findOne(query);
+        res.send(order);
+    });
+
+    // Order delete
+    app.delete('/order-delete/:id', verifyToken, verifyAdmin, async(req, res)=>{
+
+    });
+
     /*============================================================
           ******** Login & Register ( User management) *******
         ============================================*/
