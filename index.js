@@ -14,9 +14,9 @@ app.get("/", (req, res) => {
 });
 
 /*
-  ==========================
-   JSON web token ( verify token) 
-   ===========================
+  ===========================================
+    *** JSON web token ( verify token) ***
+   ===========================================
 */ 
 function verifyToken(req, res, next) {
   const authorization = req.headers.auth;
@@ -42,6 +42,30 @@ function verifyToken(req, res, next) {
     }
   });
 }
+
+/*===========================================
+        *** Verify admin ***
+===========================================*/ 
+
+const verifyAdmin = async(req, res, next) =>{
+  const email = req.query.email;
+  const query = {email};
+  const user = await usersCollection.findOne(query).toArray();
+
+  if(user?.role === 'admin'){
+      return next();
+  }
+  else{
+    return res.status(403).send({message : 'Forbidden access'});
+  }
+}
+
+
+
+/*======================================================================================*/ 
+/*======================================================================================*/ 
+/*======================================================================================*/ 
+/*======================================================================================*/ 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.otkxf.mongodb.net/?retryWrites=true&w=majority`;
@@ -111,8 +135,16 @@ async function run() {
 
     });
 
-    /*==========================================
-          ******** Login & Register *******
+
+    // ************ Admin control *******
+
+    app.get('/orders', verifyToken, verifyAdmin, async(req, res) =>{
+      const result = await OrderCollection.find().toArray();
+      res.send(result);
+    });
+
+    /*============================================================
+          ******** Login & Register ( User management) *******
         ============================================*/
 
     //  send Token after login
@@ -134,6 +166,26 @@ async function run() {
       const result = await usersCollection.updateOne(query, userDoc, option);
       res.send(result);
     });
+
+    // make user
+    app.patch('/make-admin', async(req, res)=>{
+
+    });
+
+    // is admin
+    app.get('/is-admin/:email', async(req, res)=>{
+      const {email} = req.params;
+      const user = await usersCollection.findOne({email});
+
+      if(user?.role === 'admin'){
+        res.send({isAdmin : true})
+      }
+      else{
+        res.send({isAdmin : false})
+      }
+
+    });
+
   } finally {
   }
 }
