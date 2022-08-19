@@ -62,7 +62,7 @@ async function run() {
     // Data base collection
     const productsCollection = client.db("Aruth").collection("products");
     const usersCollection = client.db("Aruth").collection("users");
-    const OrderCollection = client.db("Aruth").collection("orders");
+    const orderCollection = client.db("Aruth").collection("orders");
 
     /*===========================================
         *** Verify admin ***
@@ -124,14 +124,14 @@ async function run() {
     // place order
     app.post("/place-order", verifyToken, async (req, res) => {
       const ordersInfo = req.body;
-      const result = await OrderCollection.insertOne(ordersInfo);
+      const result = await orderCollection.insertOne(ordersInfo);
       res.send(result);
     });
 
     // ************ Admin control *******
 
     app.get("/orders", verifyToken, verifyAdmin, async (req, res) => {
-      const result = await OrderCollection.find().project({
+      const orders = await orderCollection.find().project({
         _id : 1,
         productImg: 1,
         productName : 1,
@@ -139,21 +139,31 @@ async function run() {
         status : 1,
         date : 1,
       }).toArray();
-      res.send(result);
+      const recentOrders = orders.reverse();
+      res.send(recentOrders);
     });
 
     // Order details
     app.get('/order-details/:id', verifyToken, verifyAdmin,  async(req, res)=>{
-        console.log('hi')
         const {id} = req.params;
         const query = {_id : ObjectId(id)};
-        const order = await OrderCollection.findOne(query);
+        const order = await orderCollection.findOne(query);
         res.send(order);
+    });
+
+    // update order status 
+    app.patch('/update-order-info/:id', verifyToken, verifyAdmin,  async(req, res)=>{
+      const {id} = req.params;
+      const updatedInfo = req.body;
+      const result = await orderCollection.updateOne({_id : ObjectId(id)}, {$set : updatedInfo});
+      res.send(result);
     });
 
     // Order delete
     app.delete('/order-delete/:id', verifyToken, verifyAdmin, async(req, res)=>{
-
+      const {id} = req.params;
+      const result = await orderCollection.deleteOne({_id : ObjectId(id)});
+      res.send(result);
     });
 
     /*============================================================
