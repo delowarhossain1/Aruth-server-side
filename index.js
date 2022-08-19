@@ -124,45 +124,92 @@ async function run() {
     // place order
     app.post("/place-order", verifyToken, async (req, res) => {
       const ordersInfo = req.body;
-      const result = await orderCollection.insertOne(ordersInfo);
+      const totalOrders = await orderCollection.estimatedDocumentCount();
+
+      // make order number
+      const orderNum = `AR${require("crypto")
+        .randomBytes(2)
+        .toString("hex")}C${totalOrders}`;
+      const doc = { ...ordersInfo, orderNum };
+
+      const result = await orderCollection.insertOne(doc);
       res.send(result);
     });
 
     // ************ Admin control *******
 
     app.get("/orders", verifyToken, verifyAdmin, async (req, res) => {
-      const orders = await orderCollection.find().project({
-        _id : 1,
-        productImg: 1,
-        productName : 1,
-        productQuantity : 1,
-        status : 1,
-        date : 1,
-      }).toArray();
+      const orders = await orderCollection
+        .find()
+        .project({
+          _id: 1,
+          productImg: 1,
+          productName: 1,
+          productQuantity: 1,
+          status: 1,
+          date: 1,
+        })
+        .toArray();
       const recentOrders = orders.reverse();
       res.send(recentOrders);
     });
 
     // Order details
-    app.get('/order-details/:id', verifyToken, verifyAdmin,  async(req, res)=>{
-        const {id} = req.params;
-        const query = {_id : ObjectId(id)};
+    app.get(
+      "/order-details/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const { id } = req.params;
+        const query = { _id: ObjectId(id) };
         const order = await orderCollection.findOne(query);
         res.send(order);
-    });
+      }
+    );
 
-    // update order status 
-    app.patch('/update-order-info/:id', verifyToken, verifyAdmin,  async(req, res)=>{
-      const {id} = req.params;
-      const updatedInfo = req.body;
-      const result = await orderCollection.updateOne({_id : ObjectId(id)}, {$set : updatedInfo});
-      res.send(result);
-    });
+    // update order status
+    app.patch(
+      "/update-order-info/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const { id } = req.params;
+        const updatedInfo = req.body;
+        const result = await orderCollection.updateOne(
+          { _id: ObjectId(id) },
+          { $set: updatedInfo }
+        );
+        res.send(result);
+      }
+    );
 
     // Order delete
-    app.delete('/order-delete/:id', verifyToken, verifyAdmin, async(req, res)=>{
-      const {id} = req.params;
-      const result = await orderCollection.deleteOne({_id : ObjectId(id)});
+    app.delete(
+      "/order-delete/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const { id } = req.params;
+        const result = await orderCollection.deleteOne({ _id: ObjectId(id) });
+        res.send(result);
+      }
+    );
+
+    // Search order by order number
+    app.get("/search-order/:id", verifyToken, verifyAdmin, async (req, res) => {
+      console.log("jio");
+      const id = req.params.id;
+      const result = await orderCollection
+        .find({ orderNum: id })
+        .project({
+          _id: 1,
+          productImg: 1,
+          productName: 1,
+          productQuantity: 1,
+          status: 1,
+          date: 1,
+        })
+        .toArray();
       res.send(result);
     });
 
