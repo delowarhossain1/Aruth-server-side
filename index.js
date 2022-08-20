@@ -117,6 +117,21 @@ async function run() {
       res.send(product);
     });
 
+          /*********** Admin control ***********/ 
+    
+    app.get('/products', verifyToken, verifyAdmin, async(req, res)=>{
+      const product = await productsCollection.find().project({
+        img : 1,
+        name : 1,
+        price : 1,
+        totalSells : 1,
+        couponCode : 1,
+      }).toArray();
+      
+      const latestProduct = product.reverse();
+      res.send(latestProduct);
+    });
+
     /*==========================================
           ********* Order management **********
         ============================================*/
