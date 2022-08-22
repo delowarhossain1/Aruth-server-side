@@ -60,7 +60,7 @@ async function run() {
     await client.connect();
 
     // Data base collection
-    const productsCollection = client.db("Aruth").collection("products");
+    const productCollection = client.db("Aruth").collection("products");
     const usersCollection = client.db("Aruth").collection("users");
     const orderCollection = client.db("Aruth").collection("orders");
 
@@ -86,7 +86,7 @@ async function run() {
 
     // get popular products
     app.get("/popular-products", async (req, res) => {
-      const allPopularProducts = productsCollection.find({ popular: true });
+      const allPopularProducts = productCollection.find({ popular: true });
       const skip = allPopularProducts.length - 5;
       const latestProducts = allPopularProducts.skip(skip).project({
         img: 1,
@@ -105,7 +105,7 @@ async function run() {
 
     // Get all products
     app.get("/all-products", async (req, res) => {
-      const result = await productsCollection.find().toArray();
+      const result = await productCollection.find().toArray();
       const latestProduct = result.reverse();
       res.send(latestProduct);
     });
@@ -113,24 +113,32 @@ async function run() {
     // get product info by id
     app.get("/product-details/:id", async (req, res) => {
       const { id } = req.params;
-      const product = await productsCollection.findOne({ _id: ObjectId(id) });
+      const product = await productCollection.findOne({ _id: ObjectId(id) });
       res.send(product);
     });
 
           /*********** Admin control ***********/ 
-    
+   
+    // get our available products
     app.get('/products', verifyToken, verifyAdmin, async(req, res)=>{
-      const product = await productsCollection.find().project({
+      const product = await productCollection.find().project({
         img : 1,
         name : 1,
         price : 1,
         totalSells : 1,
         couponCode : 1,
       }).toArray();
-      
+
       const latestProduct = product.reverse();
       res.send(latestProduct);
     });
+
+    // product details
+    app.get('/product-explore/:id', verifyToken, verifyAdmin, async(req, res)=>{
+      const {id} = req.params;
+      const product = await productCollection.findOne({_id : ObjectId(id)});
+      res.send(product);
+    })
 
     /*==========================================
           ********* Order management **********
