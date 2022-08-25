@@ -262,23 +262,30 @@ async function run() {
       res.send(result);
     });
 
-        /*==========================================
+    /*==========================================
           ********* Manage category **********
         ============================================*/
-    
+    // Get all category
+    app.get("/categories", async (req, res) => {
+      const result = await categoryCollection.find().toArray();
+      res.send(result);
+    });
+
+    /*-------------- Admin control -----------------*/ 
 
     // inset a new category;
-    app.post('/create-category', verifyToken, verifyAdmin, async(req, res)=>{
+    app.post("/create-category", verifyToken, verifyAdmin, async (req, res) => {
       const categoryInfo = req.body;
       const result = await categoryCollection.insertOne(categoryInfo);
       res.send(result);
-    })
-
-    // Get all category
-    app.get('/categories', verifyToken, verifyAdmin, async(req, res)=>{
-      const result = await categoryCollection.find().project({text : 1}).toArray();
-      res.send(result);
     });
+
+    // delete category
+    app.delete('/delete-category/:id', verifyToken, verifyAdmin, async(req, res)=>{
+      const {id} = req.params;
+      const result = await categoryCollection.deleteOne({_id : ObjectId(id)});
+      res.send(result);
+    })
 
     /*============================================================
           ******** Login & Register ( User management) *******
