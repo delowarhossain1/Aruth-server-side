@@ -271,7 +271,19 @@ async function run() {
       res.send(result);
     });
 
-    /*-------------- Admin control -----------------*/ 
+    // Get latest 4 category
+    app.get("/latest-category", async (req, res) => {
+      const categoryLength = await categoryCollection.estimatedDocumentCount();
+      const latestCategories = await categoryCollection
+        .find()
+        .skip(categoryLength - 4)
+        .toArray();
+      
+      const reverseCategory = latestCategories.reverse();
+      res.send(reverseCategory);
+    });
+
+    /*-------------- Admin control -----------------*/
 
     // inset a new category;
     app.post("/create-category", verifyToken, verifyAdmin, async (req, res) => {
@@ -281,11 +293,18 @@ async function run() {
     });
 
     // delete category
-    app.delete('/delete-category/:id', verifyToken, verifyAdmin, async(req, res)=>{
-      const {id} = req.params;
-      const result = await categoryCollection.deleteOne({_id : ObjectId(id)});
-      res.send(result);
-    })
+    app.delete(
+      "/delete-category/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const { id } = req.params;
+        const result = await categoryCollection.deleteOne({
+          _id: ObjectId(id),
+        });
+        res.send(result);
+      }
+    );
 
     /*============================================================
           ******** Login & Register ( User management) *******
