@@ -265,6 +265,7 @@ async function run() {
         /*==========================================
           ********* Manage category **********
         ============================================*/
+    
 
     // inset a new category;
     app.post('/create-category', verifyToken, verifyAdmin, async(req, res)=>{
@@ -272,6 +273,12 @@ async function run() {
       const result = await categoryCollection.insertOne(categoryInfo);
       res.send(result);
     })
+
+    // Get all category
+    app.get('/categories', verifyToken, verifyAdmin, async(req, res)=>{
+      const result = await categoryCollection.find().project({text : 1}).toArray();
+      res.send(result);
+    });
 
     /*============================================================
           ******** Login & Register ( User management) *******
