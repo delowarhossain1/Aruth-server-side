@@ -292,6 +292,12 @@ async function run() {
       res.send(result);
     });
 
+    // Get all category title
+    app.get('/category-title', verifyToken, verifyAdmin, async(req, res)=>{
+      const result = await categoryCollection.find().project({text : 1}).toArray();
+      res.send(result);
+    });
+
     // delete category
     app.delete(
       "/delete-category/:id",
