@@ -63,6 +63,7 @@ async function run() {
     const productCollection = client.db("Aruth").collection("products");
     const usersCollection = client.db("Aruth").collection("users");
     const orderCollection = client.db("Aruth").collection("orders");
+    const categoryCollection = client.db("Aruth").collection("categories");
 
     /*===========================================
         *** Verify admin ***
@@ -117,28 +118,53 @@ async function run() {
       res.send(product);
     });
 
-          /*********** Admin control ***********/ 
-   
+    /*********** Admin control ***********/
+
     // get our available products
-    app.get('/products', verifyToken, verifyAdmin, async(req, res)=>{
-      const product = await productCollection.find().project({
-        img : 1,
-        name : 1,
-        price : 1,
-        totalSells : 1,
-        couponCode : 1,
-      }).toArray();
+    app.get("/products", verifyToken, verifyAdmin, async (req, res) => {
+      const product = await productCollection
+        .find()
+        .project({
+          img: 1,
+          name: 1,
+          price: 1,
+          totalSells: 1,
+          couponCode: 1,
+        })
+        .toArray();
 
       const latestProduct = product.reverse();
       res.send(latestProduct);
     });
 
     // product details
-    app.get('/product-explore/:id', verifyToken, verifyAdmin, async(req, res)=>{
-      const {id} = req.params;
-      const product = await productCollection.findOne({_id : ObjectId(id)});
-      res.send(product);
-    })
+    app.get(
+      "/product-explore/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const { id } = req.params;
+        const product = await productCollection.findOne({ _id: ObjectId(id) });
+        res.send(product);
+      }
+    );
+
+    // update product information
+    app.patch(
+      "/update-product-info/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const updatedInfo = req.body;
+        const { id } = req.params;
+        const result = await productCollection.updateOne(
+          { _id: ObjectId(id) },
+          { $set: updatedInfo }
+        );
+
+        res.send(result);
+      }
+    );
 
     /*==========================================
           ********* Order management **********
@@ -235,6 +261,17 @@ async function run() {
         .toArray();
       res.send(result);
     });
+
+        /*==========================================
+          ********* Manage category **********
+        ============================================*/
+
+    // inset a new category;
+    app.post('/create-category', verifyToken, verifyAdmin, async(req, res)=>{
+      const categoryInfo = req.body;
+      const result = await categoryCollection.insertOne(categoryInfo);
+      res.send(result);
+    })
 
     /*============================================================
           ******** Login & Register ( User management) *******
