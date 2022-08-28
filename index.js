@@ -340,11 +340,18 @@ async function run() {
         ============================================*/
 
       // Add a new sliders
-      app.post('insert-slider', verifyToken, verifyAdmin, async(req, res)=> {
+      app.post('/insert-slider', verifyToken, verifyAdmin, async(req, res)=> {
         const info = req.body;
         const result = await slidersCollection.insertOne(info);
         res.send(result);
       });
+
+      // delete a slider 
+      app.delete('/delete-slider/:id', verifyToken, verifyAdmin, async(req, res)=>{
+        const {id} = req.params;
+        const result = await slidersCollection.deleteOne({_id : ObjectId(id)});
+        res.send(result);
+      })
 
       // get sliders
       app.get('/sliders', async(req, res)=>{
