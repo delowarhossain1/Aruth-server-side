@@ -64,6 +64,7 @@ async function run() {
     const usersCollection = client.db("Aruth").collection("users");
     const orderCollection = client.db("Aruth").collection("orders");
     const categoryCollection = client.db("Aruth").collection("categories");
+    const slidersCollection = client.db("Aruth").collection("sliders");
 
     /*===========================================
         *** Verify admin ***
@@ -333,6 +334,23 @@ async function run() {
         res.send(result);
       }
     );
+
+      /*==========================================
+          ********* Manage Sliders **********
+        ============================================*/
+
+      // Add a new sliders
+      app.post('insert-slider', verifyToken, verifyAdmin, async(req, res)=> {
+        const info = req.body;
+        const result = await slidersCollection.insertOne(info);
+        res.send(result);
+      });
+
+      // get sliders
+      app.get('/sliders', async(req, res)=>{
+        const result = await slidersCollection.find().toArray();
+        res.send(result);
+      })
 
     /*============================================================
           ******** Login & Register ( User management) *******
