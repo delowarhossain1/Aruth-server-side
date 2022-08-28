@@ -1,3 +1,4 @@
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -47,7 +48,6 @@ function verifyToken(req, res, next) {
 /*======================================================================================*/
 /*======================================================================================*/
 
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.otkxf.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -87,22 +87,27 @@ async function run() {
 
     // get popular products
     app.get("/popular-products", async (req, res) => {
-      const allPopularProducts = productCollection.find({ popular: true });
-      const skip = allPopularProducts.length - 5;
-      const latestProducts = allPopularProducts.skip(skip).project({
+      const totalProduct = await productCollection.estimatedDocumentCount();
+      const skipCount = totalProduct - 5 <= 0 ? 0 : count - 5;
+
+      const latestProducts = await productCollection.find({ popular: true }) .project({
         img: 1,
         name: 1,
         ratings: 1,
         price: 1,
         discount: 1,
-      });
-      const exactProduct = await latestProducts.toArray();
-      const reverse = exactProduct.reverse();
+      })
+      .skip(skipCount)
+      .toArray();
+
+      const reverse = latestProducts.reverse();
       res.send(reverse);
     });
 
     // Just for you
-    app.get("/just-for-you", async (req, res) => {});
+    app.get("/just-for-you", async (req, res) => {
+      
+    });
 
     // Get all products
     app.get("/all-products", async (req, res) => {
@@ -119,6 +124,18 @@ async function run() {
     });
 
     /*********** Admin control ***********/
+
+    // Insert a new product
+    app.post(
+      "/insert-product",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const info = req.body;
+        const result = await productCollection.insertOne(info);
+        res.send(result);
+      }
+    );
 
     // get our available products
     app.get("/products", verifyToken, verifyAdmin, async (req, res) => {
@@ -274,11 +291,13 @@ async function run() {
     // Get latest 4 category
     app.get("/latest-category", async (req, res) => {
       const categoryLength = await categoryCollection.estimatedDocumentCount();
+      const skipCount = categoryLength - 4 <= 0 ? 0 : categoryLength - 4;
+
       const latestCategories = await categoryCollection
         .find()
-        .skip(categoryLength - 4)
+        .skip(skipCount)
         .toArray();
-      
+
       const reverseCategory = latestCategories.reverse();
       res.send(reverseCategory);
     });
@@ -293,8 +312,11 @@ async function run() {
     });
 
     // Get all category title
-    app.get('/category-title', verifyToken, verifyAdmin, async(req, res)=>{
-      const result = await categoryCollection.find().project({text : 1}).toArray();
+    app.get("/category-title", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await categoryCollection
+        .find()
+        .project({ text: 1 })
+        .toArray();
       res.send(result);
     });
 
@@ -334,6 +356,13 @@ async function run() {
       const option = { upsert: true };
       const result = await usersCollection.updateOne(query, userDoc, option);
       res.send(result);
+    });
+
+    // get all users
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      const reverseUserInfo = result.reverse();
+      res.send(reverseUserInfo);
     });
 
     // make user
