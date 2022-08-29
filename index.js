@@ -124,6 +124,14 @@ async function run() {
       res.send(product);
     });
 
+    // get product by category
+    app.get('/categories-product/:id', async(req, res)=>{
+      const {id} = req.params;
+      const query = {categories : id};
+      const result = await productCollection.find(query).toArray();
+      res.send(result);
+    })
+
     /*********** Admin control ***********/
 
     // Insert a new product
