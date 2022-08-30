@@ -212,6 +212,13 @@ async function run() {
       res.send(result);
     });
 
+    // Get my orders
+    app.get('/my-orders', verifyToken, async(req, res)=>{
+      const {email} = req.query;
+      const result = await orderCollection.find({email}).toArray();
+      res.send(result);
+    })
+
     // ************ Admin control *******
 
     app.get("/orders", verifyToken, verifyAdmin, async (req, res) => {
@@ -399,14 +406,18 @@ async function run() {
       res.send(reverseUserInfo);
     });
 
-    // make user
-    app.patch("/make-admin", async (req, res) => {});
+    // make amin
+    app.patch("/make-admin", verifyToken, verifyAdmin, async (req, res) => {
+
+    });
+
+    // delete admin
 
     // get all amin
     app.get('/all-admins', verifyToken, verifyAdmin, async(req, res)=>{
       const result = await usersCollection.find({role : 'admin'}).toArray();
       res.send(result);
-    })
+    });
 
     // is admin
     app.get("/is-admin/:email", async (req, res) => {
