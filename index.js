@@ -125,9 +125,9 @@ async function run() {
     });
 
     // get product by category
-    app.get('/categories-product/:id', async(req, res)=>{
-      const {id} = req.params;
-      const query = {categories : id};
+    app.get('/categories-product/:name', async(req, res)=>{
+      const {name} = req.params;
+      const query = {categories : name};
       const result = await productCollection.find(query).toArray();
       res.send(result);
     })
@@ -156,6 +156,7 @@ async function run() {
           price: 1,
           totalSells: 1,
           couponCode: 1,
+          categories : 1
         })
         .toArray();
 
@@ -400,6 +401,12 @@ async function run() {
 
     // make user
     app.patch("/make-admin", async (req, res) => {});
+
+    // get all amin
+    app.get('/all-admins', verifyToken, verifyAdmin, async(req, res)=>{
+      const result = await usersCollection.find({role : 'admin'}).toArray();
+      res.send(result);
+    })
 
     // is admin
     app.get("/is-admin/:email", async (req, res) => {
