@@ -91,24 +91,24 @@ async function run() {
       const totalProduct = await productCollection.estimatedDocumentCount();
       const skipCount = totalProduct - 5 <= 0 ? 0 : count - 5;
 
-      const latestProducts = await productCollection.find({ popular: true }) .project({
-        img: 1,
-        name: 1,
-        ratings: 1,
-        price: 1,
-        discount: 1,
-      })
-      .skip(skipCount)
-      .toArray();
+      const latestProducts = await productCollection
+        .find({ popular: true })
+        .project({
+          img: 1,
+          name: 1,
+          ratings: 1,
+          price: 1,
+          discount: 1,
+        })
+        .skip(skipCount)
+        .toArray();
 
       const reverse = latestProducts.reverse();
       res.send(reverse);
     });
 
     // Just for you
-    app.get("/just-for-you", async (req, res) => {
-      
-    });
+    app.get("/just-for-you", async (req, res) => {});
 
     // Get all products
     app.get("/all-products", async (req, res) => {
@@ -125,26 +125,21 @@ async function run() {
     });
 
     // get product by category
-    app.get('/categories-product/:name', async(req, res)=>{
-      const {name} = req.params;
-      const query = {categories : name};
+    app.get("/categories-product/:name", async (req, res) => {
+      const { name } = req.params;
+      const query = { categories: name };
       const result = await productCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
     /*********** Admin control ***********/
 
     // Insert a new product
-    app.post(
-      "/insert-product",
-      verifyToken,
-      verifyAdmin,
-      async (req, res) => {
-        const info = req.body;
-        const result = await productCollection.insertOne(info);
-        res.send(result);
-      }
-    );
+    app.post("/insert-product", verifyToken, verifyAdmin, async (req, res) => {
+      const info = req.body;
+      const result = await productCollection.insertOne(info);
+      res.send(result);
+    });
 
     // get our available products
     app.get("/products", verifyToken, verifyAdmin, async (req, res) => {
@@ -156,7 +151,7 @@ async function run() {
           price: 1,
           totalSells: 1,
           couponCode: 1,
-          categories : 1
+          categories: 1,
         })
         .toArray();
 
@@ -213,11 +208,23 @@ async function run() {
     });
 
     // Get my orders
-    app.get('/my-orders', verifyToken, async(req, res)=>{
-      const {email} = req.query;
-      const result = await orderCollection.find({email}).toArray();
-      res.send(result);
-    })
+    app.get("/my-orders", verifyToken, async (req, res) => {
+      const { email } = req.query;
+      const result = await orderCollection
+        .find({ email })
+        .project({
+          productImg : 1,
+          productName : 1,
+          productQuantity : 1,
+          size : 1,
+          status : 1,
+          orderNum : 1,
+          date : 1,
+        })
+        .toArray();
+        const latestOrders = result.reverse();
+      res.send(latestOrders);
+    });
 
     // ************ Admin control *******
 
@@ -351,29 +358,34 @@ async function run() {
       }
     );
 
-      /*==========================================
+    /*==========================================
           ********* Manage Sliders **********
         ============================================*/
 
-      // Add a new sliders
-      app.post('/insert-slider', verifyToken, verifyAdmin, async(req, res)=> {
-        const info = req.body;
-        const result = await slidersCollection.insertOne(info);
-        res.send(result);
-      });
+    // Add a new sliders
+    app.post("/insert-slider", verifyToken, verifyAdmin, async (req, res) => {
+      const info = req.body;
+      const result = await slidersCollection.insertOne(info);
+      res.send(result);
+    });
 
-      // delete a slider 
-      app.delete('/delete-slider/:id', verifyToken, verifyAdmin, async(req, res)=>{
-        const {id} = req.params;
-        const result = await slidersCollection.deleteOne({_id : ObjectId(id)});
+    // delete a slider
+    app.delete(
+      "/delete-slider/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const { id } = req.params;
+        const result = await slidersCollection.deleteOne({ _id: ObjectId(id) });
         res.send(result);
-      })
+      }
+    );
 
-      // get sliders
-      app.get('/sliders', async(req, res)=>{
-        const result = await slidersCollection.find().toArray();
-        res.send(result);
-      })
+    // get sliders
+    app.get("/sliders", async (req, res) => {
+      const result = await slidersCollection.find().toArray();
+      res.send(result);
+    });
 
     /*============================================================
           ******** Login & Register ( User management) *******
@@ -407,15 +419,13 @@ async function run() {
     });
 
     // make amin
-    app.patch("/make-admin", verifyToken, verifyAdmin, async (req, res) => {
-
-    });
+    app.patch("/make-admin", verifyToken, verifyAdmin, async (req, res) => {});
 
     // delete admin
 
     // get all amin
-    app.get('/all-admins', verifyToken, verifyAdmin, async(req, res)=>{
-      const result = await usersCollection.find({role : 'admin'}).toArray();
+    app.get("/all-admins", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await usersCollection.find({ role: "admin" }).toArray();
       res.send(result);
     });
 
