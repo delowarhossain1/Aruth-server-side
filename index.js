@@ -65,6 +65,7 @@ async function run() {
     const orderCollection = client.db("Aruth").collection("orders");
     const categoryCollection = client.db("Aruth").collection("categories");
     const slidersCollection = client.db("Aruth").collection("sliders");
+    const reviewsCollection = client.db("Aruth").collection("reviews");
 
     /*===========================================
         *** Verify admin ***
@@ -188,9 +189,9 @@ async function run() {
       }
     );
 
-    /*==========================================
+    /*================================================================================
           ********* Order management **********
-        ============================================*/
+    ==============================================================================*/
 
     // place order
     app.post("/place-order", verifyToken, async (req, res) => {
@@ -213,25 +214,47 @@ async function run() {
       const result = await orderCollection
         .find({ email })
         .project({
-          productImg : 1,
-          productName : 1,
-          productQuantity : 1,
-          size : 1,
-          status : 1,
-          orderNum : 1,
-          date : 1,
+          productImg: 1,
+          productName: 1,
+          productQuantity: 1,
+          size: 1,
+          status: 1,
+          orderNum: 1,
+          date: 1,
         })
         .toArray();
-        const latestOrders = result.reverse();
+      const latestOrders = result.reverse();
       res.send(latestOrders);
     });
 
     // My order details
-    app.get('/my-order-details/:id', verifyToken, async(req, res)=>{
-      const {id} = req.params;
-      const order = await orderCollection.findOne({_id : ObjectId(id)});
+    app.get("/my-order-details/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const order = await orderCollection.findOne({ _id: ObjectId(id) });
       res.send(order);
-    })
+    });
+
+    // add a review
+    app.put("/add-review/:orderNum", verifyToken, async (req, res) => {
+      const { orderNum } = req.params;
+      const review = req.body;
+      const result = await reviewsCollection.updateOne(
+        { orderNum },
+        { $set: review },
+        { upsert: true }
+      );
+      // const findReview = await reviewsCollection.find({orderNum}).toArray();
+      // console.log({productId}, productId, findReview);
+      res.send(result);
+    });
+
+    // get comments for display product
+    app.get('/product-reviews/:productId', async(req, res)=>{
+      const {productId} = req.params;
+      const reviews = await reviewsCollection.find({productId}).toArray();
+      const latestReviews = reviews.reverse();
+      res.send(latestReviews);
+    });
 
     // ************ Admin control *******
 
@@ -310,9 +333,9 @@ async function run() {
       res.send(result);
     });
 
-    /*==========================================
+    /*=====================================================================================
           ********* Manage category **********
-        ============================================*/
+        ==================================================================================*/
     // Get all category
     app.get("/categories", async (req, res) => {
       const result = await categoryCollection.find().toArray();
