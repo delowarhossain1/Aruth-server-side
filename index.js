@@ -226,6 +226,13 @@ async function run() {
       res.send(latestOrders);
     });
 
+    // My order details
+    app.get('/my-order-details/:id', verifyToken, async(req, res)=>{
+      const {id} = req.params;
+      const order = await orderCollection.findOne({_id : ObjectId(id)});
+      res.send(order);
+    })
+
     // ************ Admin control *******
 
     app.get("/orders", verifyToken, verifyAdmin, async (req, res) => {
