@@ -254,6 +254,15 @@ async function run() {
       res.send(latestReviews);
     });
 
+    // Get my all review by email;
+    app.get('/my-all-review', async(req, res)=>{
+      const {email} = req.query;
+      const reviews = await reviewsCollection.find({email}).toArray();
+      const latestReviews = reviews.reverse();
+
+      res.send(latestReviews);
+    });
+
     // get review by order number
     app.get('/get-review-by-order-number/:orderNum', verifyToken, async(req, res)=>{
       const {orderNum} = req.params;
