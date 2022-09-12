@@ -243,8 +243,6 @@ async function run() {
         { $set: review },
         { upsert: true }
       );
-      // const findReview = await reviewsCollection.find({orderNum}).toArray();
-      // console.log({productId}, productId, findReview);
       res.send(result);
     });
 
@@ -254,6 +252,13 @@ async function run() {
       const reviews = await reviewsCollection.find({productId}).toArray();
       const latestReviews = reviews.reverse();
       res.send(latestReviews);
+    });
+
+    // get review by order number
+    app.get('/get-review-by-order-number/:orderNum', verifyToken, async(req, res)=>{
+      const {orderNum} = req.params;
+      const review = await reviewsCollection.findOne({orderNum});
+      res.send(review);
     });
 
     // ************ Admin control *******
