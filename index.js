@@ -286,6 +286,22 @@ async function run() {
       res.send(deleteReview);
     });
 
+    // My recent orders 
+    app.get('/my-recent-orders', verifyToken, async(req, res)=>{
+      const {email} = req.query;
+      const orders = await orderCollection.find({email}).project({
+        orderNum: 1,
+        date : 1,
+        productImg : 1,
+        total : 1
+      }).toArray();
+
+      const orderLength = orders.length
+      const sliceOrders = orderLength > 3 ? orders.slice(orderLength - 3, orderLength) : orders;
+
+      res.send(sliceOrders);
+    });
+
     // ************ Admin control *******
 
     app.get("/orders", verifyToken, verifyAdmin, async (req, res) => {
@@ -347,7 +363,6 @@ async function run() {
 
     // Search order by order number
     app.get("/search-order/:id", verifyToken, verifyAdmin, async (req, res) => {
-      console.log("jio");
       const id = req.params.id;
       const result = await orderCollection
         .find({ orderNum: id })
@@ -503,12 +518,11 @@ async function run() {
 
     // Update user Address
     app.put('/update-address', verifyToken, async(req, res)=>{
-      console.log('ok')
       const {email} = req.query;
       const query = {email};
       const option = {upsert : true};
       const info = req.body;
-      const address = {$set : {address : info}};
+      const address = {$set : {address : info?.address, mob : info?.mob}};
       const result = await usersCollection.updateOne(query, address, option);
       res.send(result);
     })
