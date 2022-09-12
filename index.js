@@ -500,6 +500,27 @@ async function run() {
         res.send({ isAdmin: false });
       }
     });
+
+    // Update user Address
+    app.put('/update-address', verifyToken, async(req, res)=>{
+      console.log('ok')
+      const {email} = req.query;
+      const query = {email};
+      const option = {upsert : true};
+      const info = req.body;
+      const address = {$set : {address : info}};
+      const result = await usersCollection.updateOne(query, address, option);
+      res.send(result);
+    })
+
+    // Get my info
+    app.get('/my-info', verifyToken, async(req, res)=>{
+      const {email} = req.query;
+      const info = await usersCollection.findOne({email});
+      res.send(info);
+    });
+
+
   } finally {
   }
 }
