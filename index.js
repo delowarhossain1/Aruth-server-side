@@ -37,7 +37,7 @@ function verifyToken(req, res, next) {
       if (decoded.email === email) {
         return next();
       } else {
-        return send.status(403).send({ message: "Forbidden access" });
+        return res.status(403).send({ message: "Forbidden access" });
       }
     }
   });
@@ -247,27 +247,43 @@ async function run() {
     });
 
     // get comments for display product
-    app.get('/product-reviews/:productId', async(req, res)=>{
-      const {productId} = req.params;
-      const reviews = await reviewsCollection.find({productId}).toArray();
+    app.get("/product-reviews/:productId", async (req, res) => {
+      const { productId } = req.params;
+      const reviews = await reviewsCollection.find({ productId }).toArray();
       const latestReviews = reviews.reverse();
       res.send(latestReviews);
     });
 
     // Get my all review by email;
-    app.get('/my-all-review', async(req, res)=>{
-      const {email} = req.query;
-      const reviews = await reviewsCollection.find({email}).toArray();
+    app.get("/my-all-review", async (req, res) => {
+      const { email } = req.query;
+      const reviews = await reviewsCollection
+        .find({ email })
+        .project({ productImg : 1, ratings : 1, text : 1, productName : 1, reviewId : 1})
+        .toArray();
       const latestReviews = reviews.reverse();
 
       res.send(latestReviews);
     });
 
     // get review by order number
-    app.get('/get-review-by-order-number/:orderNum', verifyToken, async(req, res)=>{
-      const {orderNum} = req.params;
-      const review = await reviewsCollection.findOne({orderNum});
-      res.send(review);
+    app.get(
+      "/get-review-by-order-number/:orderNum",
+      verifyToken,
+      async (req, res) => {
+        const { orderNum } = req.params;
+        const review = await reviewsCollection.findOne({ orderNum });
+        res.send(review);
+      }
+    );
+
+    // Delete my review
+    app.delete("/delete-my-review", verifyToken, async (req, res) => {
+      const { id } = req.query;
+      const deleteReview = await reviewsCollection.deleteOne({
+        _id: ObjectId(id),
+      });
+      res.send(deleteReview);
     });
 
     // ************ Admin control *******
