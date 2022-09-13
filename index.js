@@ -234,15 +234,43 @@ async function run() {
       res.send(order);
     });
 
-    // add a review
+    // add a review And update product ratings
     app.put("/add-review/:orderNum", verifyToken, async (req, res) => {
       const { orderNum } = req.params;
       const review = req.body;
+
+      // Insert / update a review
       const result = await reviewsCollection.updateOne(
         { orderNum },
         { $set: review },
         { upsert: true }
       );
+
+      // Find the product
+      const productId = review?.productId;
+      const productInfo = await productCollection.findOne({
+        _id: ObjectId(productId),
+      });
+
+      // Find all reviews star
+      const allStars = await reviewsCollection
+        .find({ productId })
+        .project({ ratings: 1 })
+        .toArray();
+
+        // Calculate the product ratings
+      const stars = allStars?.map(star => star?.ratings);
+      const sumOfStars = stars.reduce((sum, a) => sum + a, 0);
+      const averageStaring = sumOfStars / (stars?.length || 1);
+      const newRatings = averageStaring.toPrecision(2);
+
+      // Update product Ratings
+      const updateReview = await productCollection.updateOne(
+        { _id: ObjectId(productId) },
+        { $set: { ratings: newRatings } },
+        { upsert: true }
+      );
+
       res.send(result);
     });
 
@@ -259,7 +287,13 @@ async function run() {
       const { email } = req.query;
       const reviews = await reviewsCollection
         .find({ email })
-        .project({ productImg : 1, ratings : 1, text : 1, productName : 1, reviewId : 1})
+        .project({
+          productImg: 1,
+          ratings: 1,
+          text: 1,
+          productName: 1,
+          orderId: 1,
+        })
         .toArray();
       const latestReviews = reviews.reverse();
 
@@ -286,18 +320,22 @@ async function run() {
       res.send(deleteReview);
     });
 
-    // My recent orders 
-    app.get('/my-recent-orders', verifyToken, async(req, res)=>{
-      const {email} = req.query;
-      const orders = await orderCollection.find({email}).project({
-        orderNum: 1,
-        date : 1,
-        productImg : 1,
-        total : 1
-      }).toArray();
+    // My recent orders
+    app.get("/my-recent-orders", verifyToken, async (req, res) => {
+      const { email } = req.query;
+      const orders = await orderCollection
+        .find({ email })
+        .project({
+          orderNum: 1,
+          date: 1,
+          productImg: 1,
+          total: 1,
+        })
+        .toArray();
 
-      const orderLength = orders.length
-      const sliceOrders = orderLength > 3 ? orders.slice(orderLength - 3, orderLength) : orders;
+      const orderLength = orders.length;
+      const sliceOrders =
+        orderLength > 3 ? orders.slice(orderLength - 3, orderLength) : orders;
 
       res.send(sliceOrders);
     });
@@ -517,24 +555,22 @@ async function run() {
     });
 
     // Update user Address
-    app.put('/update-address', verifyToken, async(req, res)=>{
-      const {email} = req.query;
-      const query = {email};
-      const option = {upsert : true};
+    app.put("/update-address", verifyToken, async (req, res) => {
+      const { email } = req.query;
+      const query = { email };
+      const option = { upsert: true };
       const info = req.body;
-      const address = {$set : {address : info?.address, mob : info?.mob}};
+      const address = { $set: { address: info?.address, mob: info?.mob } };
       const result = await usersCollection.updateOne(query, address, option);
       res.send(result);
-    })
-
-    // Get my info
-    app.get('/my-info', verifyToken, async(req, res)=>{
-      const {email} = req.query;
-      const info = await usersCollection.findOne({email});
-      res.send(info);
     });
 
-
+    // Get my info
+    app.get("/my-info", verifyToken, async (req, res) => {
+      const { email } = req.query;
+      const info = await usersCollection.findOne({ email });
+      res.send(info);
+    });
   } finally {
   }
 }
