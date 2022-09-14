@@ -133,6 +133,13 @@ async function run() {
       res.send(result);
     });
 
+    // Recommended product
+    app.get('/recommended-products/:category', async(req, res)=>{
+      const {category} = req.params;
+      const result = await productCollection.find({categories : category}).limit(6).toArray();
+      res.send(result);
+    });
+
     /*********** Admin control ***********/
 
     // Insert a new product
