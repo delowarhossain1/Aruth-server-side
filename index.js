@@ -93,7 +93,7 @@ async function run() {
       const skipCount = totalProduct - 5 <= 0 ? 0 : count - 5;
 
       const latestProducts = await productCollection
-        .find({ popular: true })
+        .find({ type: 'popular' })
         .project({
           img: 1,
           name: 1,
@@ -107,9 +107,6 @@ async function run() {
       const reverse = latestProducts.reverse();
       res.send(reverse);
     });
-
-    // Just for you
-    app.get("/just-for-you", async (req, res) => {});
 
     // Get all products
     app.get("/all-products", async (req, res) => {
@@ -138,6 +135,27 @@ async function run() {
       const {category} = req.params;
       const result = await productCollection.find({categories : category}).limit(6).toArray();
       res.send(result);
+    });
+
+    // Just for you products
+    app.get('/just-for-you', async(req, res)=>{
+      const totalProduct = await productCollection.estimatedDocumentCount();
+      const skipCount = totalProduct - 5 <= 0 ? 0 : count - 5;
+
+      const latestProducts = await productCollection
+        .find({ type: 'justForYou' })
+        .project({
+          img: 1,
+          name: 1,
+          ratings: 1,
+          price: 1,
+          discount: 1,
+        })
+        .skip(skipCount)
+        .toArray();
+
+      const reverse = latestProducts.reverse();
+      res.send(reverse);
     });
 
     /*********** Admin control ***********/
@@ -434,12 +452,9 @@ async function run() {
 
     // Get latest 4 category
     app.get("/latest-category", async (req, res) => {
-      const categoryLength = await categoryCollection.estimatedDocumentCount();
-      const skipCount = categoryLength - 4 <= 0 ? 0 : categoryLength - 4;
-
       const latestCategories = await categoryCollection
-        .find()
-        .skip(skipCount)
+        .find({type : 'home'})
+        .limit(4)
         .toArray();
 
       const reverseCategory = latestCategories.reverse();
