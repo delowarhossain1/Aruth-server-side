@@ -90,7 +90,7 @@ async function run() {
     // get popular products
     app.get("/popular-products", async (req, res) => {
       const totalProduct = await productCollection.estimatedDocumentCount();
-      const skipCount = totalProduct - 5 <= 0 ? 0 : count - 5;
+      const skipCount = totalProduct - 5 <= 0 ? 0 : totalProduct - 5;
 
       const latestProducts = await productCollection
         .find({ type: 'popular' })
@@ -140,7 +140,7 @@ async function run() {
     // Just for you products
     app.get('/just-for-you', async(req, res)=>{
       const totalProduct = await productCollection.estimatedDocumentCount();
-      const skipCount = totalProduct - 5 <= 0 ? 0 : count - 5;
+      const skipCount = totalProduct - 5 <= 0 ? 0 : totalProduct - 5;
 
       const latestProducts = await productCollection
         .find({ type: 'justForYou' })
